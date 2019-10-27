@@ -1,7 +1,6 @@
 const {ObjectID} = require('mongodb');
 
 class RecipeRepository {
-
     constructor(collection) {
         this.collection = collection;
     }
