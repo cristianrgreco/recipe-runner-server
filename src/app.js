@@ -10,38 +10,52 @@ const cors = require('koa2-cors');
 const mime = require('mime-types');
 const RecipeRepository = require('./RecipeRepository');
 
-const publicDir = path.join(__dirname, "..", "public");
-
 module.exports = db => {
-    const recipeRepository = new RecipeRepository(db.collection('recipes'));
+    const publicDir = path.join(__dirname, "..", "public");
 
-    const router = new Router();
-
-    router.get('/recipes', async ctx => {
+    async function fetchRecipes(ctx) {
         ctx.body = await recipeRepository.findAll();
-    });
+    }
 
-    router.get('/recipes/:id', async ctx => {
+    async function fetchRecipe(ctx) {
         const id = ctx.params.id;
         ctx.body = await recipeRepository.findById(id);
-    });
+    }
 
-    router.post('/recipes', async ctx => {
+    async function createRecipe(ctx) {
         const {path, type} = ctx.request.files.image;
         const image = await uploadFile(path, type);
 
-        const recipe = {
-            ...JSON.parse(ctx.request.body.recipe),
-            image
-        };
-
+        const recipe = {...JSON.parse(ctx.request.body.recipe), image};
         await recipeRepository.save(recipe);
 
         const location = `/recipes/${recipe._id}`;
         ctx.set('Location', location);
-
         ctx.status = 201;
-    });
+    }
+
+    function uploadFile(remotePath, type) {
+        return new Promise(resolve => {
+            const imageId = `${uuid()}.${mime.extension(type)}`;
+
+            const reader = fs.createReadStream(remotePath);
+
+            const serverPath = path.join(publicDir, `${imageId}`);
+            const stream = fs.createWriteStream(serverPath);
+            reader.on('end', () => {
+                resolve(imageId);
+            });
+
+            reader.pipe(stream);
+        });
+    }
+
+    const recipeRepository = new RecipeRepository(db.collection('recipes'));
+
+    const router = new Router();
+    router.get('/recipes', fetchRecipes);
+    router.get('/recipes/:id', fetchRecipe);
+    router.post('/recipes', createRecipe);
 
     return new Koa()
         .use((ctx, next) => koaMount("/public", koaStatic(publicDir))(ctx, next))
@@ -50,19 +64,3 @@ module.exports = db => {
         .use(router.routes())
         .use(router.allowedMethods());
 };
-
-function uploadFile(remotePath, type) {
-    return new Promise(resolve => {
-        const imageId = `${uuid()}.${mime.extension(type)}`;
-
-        const reader = fs.createReadStream(remotePath);
-
-        const serverPath = path.join(publicDir, `${imageId}`);
-        const stream = fs.createWriteStream(serverPath);
-        reader.on('end', () => {
-            resolve(imageId);
-        });
-
-        reader.pipe(stream);
-    });
-}
