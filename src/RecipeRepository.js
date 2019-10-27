@@ -1,3 +1,5 @@
+const {ObjectID} = require('mongodb');
+
 class RecipeRepository {
 
     constructor(collection) {
@@ -5,15 +7,15 @@ class RecipeRepository {
     }
 
     findAll() {
-        return new Promise((resolve, reject) => {
-            this.collection.find({}).toArray((err, docs) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(docs);
-                }
-            });
-        })
+        return this.collection.find({}).toArray();
+    }
+
+    findById(id) {
+        return this.collection.findOne({_id: new ObjectID(id)});
+    }
+
+    save(recipe) {
+        return this.collection.insertOne(recipe);
     }
 }
 
