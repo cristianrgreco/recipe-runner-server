@@ -1,9 +1,12 @@
 const app = require('./app');
 const {connectDb} = require('./db');
 
+process.on('unhandledRejection', err => console.error(err));
+
 (async () => {
     const db = await connectDb();
     console.log('Connected to DB');
 
-    app(db).listen(3000, () => console.log('Listening on port 3000'));
+    const port = 8000;
+    app(db).listen(port, () => console.log(`Listening on port ${port}`));
 })();
