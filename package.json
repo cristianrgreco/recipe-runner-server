@@ -5,7 +5,11 @@
   "main": "index.js",
   "scripts": {
     "start": "node src",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "docker build -t 804715735558.dkr.ecr.eu-west-2.amazonaws.com/recipe-runner:latest .",
+    "ecr-login": "$(aws ecr get-login --no-include-email --region eu-west-2)",
+    "push": "docker push 804715735558.dkr.ecr.eu-west-2.amazonaws.com/recipe-runner:latest",
+    "deploy": "aws ecs update-service --region eu-west-2 --cluster recipe-runner --service recipe-runner --force-new-deployment"
   },
   "keywords": [],
   "author": "",
