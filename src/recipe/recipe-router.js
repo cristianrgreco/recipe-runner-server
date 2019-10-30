@@ -1,17 +1,19 @@
 const Router = require('koa-router');
-const fileUpload = require('./../file-upload');
+const fileUploadModule = require('./../file-upload');
 
 module.exports = recipeRepository => {
-    async function fetchRecipes(ctx) {
-        ctx.body = await recipeRepository.findAll();
-    }
+    const fileUpload = fileUploadModule.remote();
 
-    async function fetchRecipe(ctx) {
+    const fetchRecipes = async ctx => {
+        ctx.body = await recipeRepository.findAll();
+    };
+
+    const fetchRecipe = async ctx => {
         const id = ctx.params.id;
         ctx.body = await recipeRepository.findById(id);
-    }
+    };
 
-    async function createRecipe(ctx) {
+    const createRecipe = async ctx => {
         const {path, type} = ctx.request.files.image;
         const image = await fileUpload(path, type);
 
@@ -21,7 +23,7 @@ module.exports = recipeRepository => {
         const location = `/recipes/${recipe._id}`;
         ctx.set('Location', location);
         ctx.status = 201;
-    }
+    };
 
     return new Router()
         .get('/recipes', fetchRecipes)

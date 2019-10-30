@@ -1,19 +1,44 @@
 const fs = require('fs');
-const path = require('path');
 const uuid = require('uuid/v1');
 const mime = require('mime-types');
-const {PUBLIC_PATH} = require('./public-dir');
+const {S3} = require('aws-sdk');
 
-module.exports = (remotePath, type) => new Promise(resolve => {
-    const reader = fs.createReadStream(remotePath);
-
+const local = () => (remotePath, type) => new Promise(resolve => {
     const imageId = `${uuid()}.${mime.extension(type)}`;
-    const serverPath = path.join(PUBLIC_PATH, `${imageId}`);
-    const stream = fs.createWriteStream(serverPath);
+    const fileStream = fs.createReadStream(remotePath);
 
-    reader.on('end', () => {
+    const stream = fs.createWriteStream(imageId);
+
+    fileStream.on('end', () => {
         resolve(imageId);
     });
 
-    reader.pipe(stream);
+    fileStream.pipe(stream);
 });
+
+const remote = () => {
+    const s3 = new S3();
+
+    return (remotePath, type) => {
+        const imageId = `${uuid()}.${mime.extension(type)}`;
+        const fileStream = fs.createReadStream(remotePath);
+
+        const uploadParams = {
+            Bucket: 'recipe-runner',
+            Key: `uploads/images/${imageId}`,
+            Body: fileStream
+        };
+
+        return new Promise((resolve, reject) => {
+            s3.upload(uploadParams, (err, data) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(data.Location);
+                }
+            });
+        });
+    };
+};
+
+module.exports = {local, remote};
