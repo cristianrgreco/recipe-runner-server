@@ -11,7 +11,7 @@ terraform {
   }
 }
 
-data "aws_kms_secrets" "kms_secrets_mongo" {
+data "aws_kms_secrets" "kms_secrets_acm" {
   secret {
     name = "ecs-cert-arn"
     payload = "AQICAHiJr8wDC5CaQ752WtUL5ltmPlZuaWP8UbRdaXBYMnc4uwFb1rk0+x0EBV18VOTbXhPFAAAAtTCBsgYJKoZIhvcNAQcGoIGkMIGhAgEAMIGbBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDOm4cich1ywd26ho6gIBEIBuIWhri1oeb6aruiz55e/P6b0xyt1sWJKkQtyOxe+9vY8TLHYaOkP1TSBzh/hfnUzxlcznbZ3lykHWI3xjevs+PnydgokvKTfrU8nxGQ9RJNfiZqUC3eX3Jz7oPcvSwbyz4BO1tY9MwYV/jubMfGg="
@@ -25,10 +25,10 @@ data "aws_kms_secrets" "kms_secrets_mongo" {
 
 output "ecs_cert_arn" {
   sensitive = true
-  value = "${data.aws_kms_secrets.kms_secrets_mongo.plaintext["ecs-cert-arn"]}"
+  value = "${data.aws_kms_secrets.kms_secrets_acm.plaintext["ecs-cert-arn"]}"
 }
 
 output "cloudfront_cert_arn" {
   sensitive = true
-  value = "${data.aws_kms_secrets.kms_secrets_mongo.plaintext["cloudfront-cert-arn"]}"
+  value = "${data.aws_kms_secrets.kms_secrets_acm.plaintext["cloudfront-cert-arn"]}"
 }
