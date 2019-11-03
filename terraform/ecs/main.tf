@@ -27,6 +27,8 @@ module "route53" {
   source = "../route53"
 }
 
+# Load balancer
+
 resource "aws_security_group" "security_group_allow_http_and_https" {
   name = "allow_http_and_https"
   description = "Allow HTTP and HTTPS traffic"
@@ -101,6 +103,8 @@ resource "aws_lb_listener" "lb_listener_forward_https" {
   }
 }
 
+# ECS
+
 resource "aws_ecs_cluster" "cluster" {
   name = "${local.project_name}"
 }
@@ -116,6 +120,80 @@ data "aws_kms_secrets" "kms_secrets_mongo" {
     payload = "AQICAHiJr8wDC5CaQ752WtUL5ltmPlZuaWP8UbRdaXBYMnc4uwH/TR4VBp9+m4n6BdXaMF3/AAAAbjBsBgkqhkiG9w0BBwagXzBdAgEAMFgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQM24Ei92f1IikPXz9lAgEQgCthM7QEUVS9A4BDKE5bj7lpmHI246EtaCXBlwJajEMdBvSbG/fZ86PxG+cG"
   }
 }
+
+# ECS IAM execution role
+
+data "aws_iam_policy" "iam_policy_ecs_task_execution" {
+  arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+resource "aws_iam_role" "iam_role_ecs_execution" {
+  name = "${local.project_name}-iam-role-ecs-execution"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "ecs-tasks.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "iam_role_ecs_execution_attachment" {
+  role = "${aws_iam_role.iam_role_ecs_execution.name}"
+  policy_arn = "${data.aws_iam_policy.iam_policy_ecs_task_execution.arn}"
+}
+
+# ECS IAM task role
+
+resource "aws_iam_policy" "iam_policy_s3_access" {
+  name = "${local.project_name}-s3-access"
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "s3:putObject",
+      "Effect": "Allow",
+      "Resource": "arn:aws:s3:::recipe-runner/uploads/*"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role" "iam_role_ecs_task" {
+  name = "${local.project_name}-iam-role-ecs-task"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "ecs-tasks.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "iam_role_ecs_task_s3_access_attachment" {
+  role = "${aws_iam_role.iam_role_ecs_task.name}"
+  policy_arn = "${aws_iam_policy.iam_policy_s3_access.arn}"
+}
+
+# ECS task
 
 data "template_file" "task_definition_template" {
   template = "${file("task-definition.json.tpl")}"
@@ -138,9 +216,11 @@ resource "aws_ecs_task_definition" "task_definition" {
   cpu = "256"
   memory = "512"
   requires_compatibilities = ["FARGATE"]
-  execution_role_arn = "arn:aws:iam::804715735558:role/ecsTaskExecutionRole"
-  task_role_arn = "arn:aws:iam::804715735558:role/AmazonECSTaskS3BucketRole"
+  execution_role_arn = "${aws_iam_role.iam_role_ecs_execution.arn}"
+  task_role_arn = "${aws_iam_role.iam_role_ecs_task.arn}"
 }
+
+# ECS service
 
 resource "aws_ecs_service" "service" {
   name = "${local.project_name}"
@@ -161,6 +241,8 @@ resource "aws_ecs_service" "service" {
     container_port = 80
   }
 }
+
+# Route53
 
 resource "aws_route53_record" "route53_record_api_hellodiners_com" {
   zone_id = "${module.route53.hosted_zone_id}"
