@@ -6,7 +6,7 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket = "recipe-runner-state"
-    key    = "ecs"
+    key = "ecs"
     region = "eu-west-2"
   }
 }
@@ -111,6 +111,11 @@ resource "aws_ecs_cluster" "cluster" {
 
 data "aws_kms_secrets" "kms_secrets_mongo" {
   secret {
+    name = "hostname"
+    payload = "AQICAHiJr8wDC5CaQ752WtUL5ltmPlZuaWP8UbRdaXBYMnc4uwF1n/BDVL4g+zcL16XBELTWAAAAfTB7BgkqhkiG9w0BBwagbjBsAgEAMGcGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMky2YAwbkFK50tXnYAgEQgDqwkf5REkyPoDXoafEM+sDXGoh9s6WgWnyTY9zankxg9RsY6Ci8m+5bcv8GdNenHY/tG/WcMIv8ftgw"
+  }
+
+  secret {
     name = "username"
     payload = "AQICAHiJr8wDC5CaQ752WtUL5ltmPlZuaWP8UbRdaXBYMnc4uwGtxblYjXjSjo8qM+WCPQajAAAAYjBgBgkqhkiG9w0BBwagUzBRAgEAMEwGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQM0G7dckfuLT3S/3d1AgEQgB8CHrWCmrYGGAc1UlHZ2WmOjDCXVvQ37cI5+ncb3Pr4"
   }
@@ -203,7 +208,8 @@ data "template_file" "task_definition_template" {
     image = "804715735558.dkr.ecr.eu-west-2.amazonaws.com/recipe-runner"
     port = "80"
     host_port = "80"
-    database = "recipe-runner"
+    database_name = "recipe-runner"
+    database_hostname = "${data.aws_kms_secrets.kms_secrets_mongo.plaintext["hostname"]}"
     database_username = "${data.aws_kms_secrets.kms_secrets_mongo.plaintext["username"]}"
     database_password = "${data.aws_kms_secrets.kms_secrets_mongo.plaintext["password"]}"
   }

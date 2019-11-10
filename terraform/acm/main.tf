@@ -6,7 +6,7 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket = "recipe-runner-state"
-    key    = "acm"
+    key = "acm"
     region = "eu-west-2"
   }
 }

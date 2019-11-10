@@ -1,19 +1,31 @@
 const {MongoClient} = require('mongodb');
 
-const username = process.env['DB_USERNAME'];
-const password = process.env['DB_PASSWORD'];
-const database = process.env['DB_DATABASE'];
-const url = `mongodb+srv://${username}:${password}@recipe-runner-imquh.mongodb.net/test?retryWrites=true&w=majority`;
-
 async function connectDb() {
-    if ([username, password, database].some(arg => arg === undefined)) {
-        throw new Error('DB_USRNAME, DB_PASSWORD and DB_DATABASE are required environment variables');
+    const client = new MongoClient(getUrl(), {useUnifiedTopology: true});
+    await client.connect();
+    return client.db(getDatabase());
+}
+
+function getUrl() {
+    const hostname = process.env['DB_HOSTNAME'];
+    const username = process.env['DB_USERNAME'];
+    const password = process.env['DB_PASSWORD'];
+
+    if ([hostname, username, password].some(arg => arg === undefined)) {
+        throw new Error('DB_HOSTNAME, DB_PASSWORD and DB_DATABASE are required environment variables');
     }
 
-    const client = new MongoClient(url, {useUnifiedTopology: true});
-    await client.connect();
+    return `mongodb+srv://${username}:${password}@${hostname}/test?retryWrites=true&w=majority`;
+}
 
-    return client.db(database);
+function getDatabase() {
+    const database = process.env['DB_DATABASE'];
+
+    if (database === undefined) {
+        throw new Error('DB_DATABASE is a required environment variable');
+    }
+
+    return database;
 }
 
 module.exports = {connectDb};

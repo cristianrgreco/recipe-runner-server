@@ -11,8 +11,12 @@
     ],
     "environment": [
       {
+        "name": "DB_HOSTNAME",
+        "value": "${database_hostname}"
+      },
+      {
         "name": "DB_DATABASE",
-        "value": "${database}"
+        "value": "${database_name}"
       },
       {
         "name": "DB_PASSWORD",
