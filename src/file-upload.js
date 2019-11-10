@@ -24,8 +24,8 @@ const remote = () => {
         const fileStream = fs.createReadStream(remotePath);
 
         const uploadParams = {
-            Bucket: 'recipe-runner',
-            Key: `uploads/images/${imageId}`,
+            Bucket: 'recipe-runner-uploads',
+            Key: imageId,
             Body: fileStream
         };
 

@@ -162,7 +162,7 @@ resource "aws_iam_policy" "iam_policy_s3_access" {
     {
       "Action": "s3:putObject",
       "Effect": "Allow",
-      "Resource": "arn:aws:s3:::recipe-runner/uploads/*"
+      "Resource": "arn:aws:s3:::recipe-runner-uploads/*"
     }
   ]
 }
