@@ -21,7 +21,7 @@ const isAuthorised = async (ctx, next) => {
             if (!await isTokenValid(token)) {
                 unauthorised(ctx);
             } else {
-                next();
+                await next();
             }
         }
     }
