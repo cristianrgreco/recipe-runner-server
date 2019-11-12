@@ -1,5 +1,6 @@
 const Router = require('koa-router');
 const fileUploadModule = require('./../file-upload');
+const {isAuthorised} = require("../auth/auth-middleware");
 
 module.exports = recipeRepository => {
     const fileUpload = fileUploadModule.remote();
@@ -28,5 +29,5 @@ module.exports = recipeRepository => {
     return new Router()
         .get('/recipes', fetchRecipes)
         .get('/recipes/:id', fetchRecipe)
-        .post('/recipes', createRecipe);
+        .post('/recipes', isAuthorised, createRecipe);
 };
