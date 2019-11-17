@@ -26,7 +26,7 @@ const isTokenValid = token => new Promise(resolve => {
             if (Object.entries(validations).some(([key, value]) => decodedToken[key] !== value)) {
                 resolve(false);
             } else {
-                resolve(true);
+                resolve({email: decodedToken.username});
             }
         }
     })

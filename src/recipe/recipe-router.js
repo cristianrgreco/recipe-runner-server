@@ -18,7 +18,12 @@ module.exports = recipeRepository => {
         const {path, type} = ctx.request.files.image;
         const image = await fileUpload(path, type);
 
-        const recipe = {...JSON.parse(ctx.request.body.recipe), image};
+        const recipe = {
+            ...JSON.parse(ctx.request.body.recipe),
+            createdAt: new Date(),
+            createdBy: ctx.state.user.email,
+            image
+        };
         await recipeRepository.save(recipe);
 
         const location = `/recipes/${recipe._id}`;

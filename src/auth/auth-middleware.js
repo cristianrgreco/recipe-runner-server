@@ -18,9 +18,11 @@ const isAuthorised = async (ctx, next) => {
         } else {
             const token = parts[1];
 
-            if (!await isTokenValid(token)) {
+            const decodedToken = await isTokenValid(token);
+            if (!decodedToken) {
                 unauthorised(ctx);
             } else {
+                ctx.state.user = {email: decodedToken.email};
                 await next();
             }
         }

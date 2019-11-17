@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node src",
+    "start:dev": "nodemon src",
     "test": "jest src",
     "deploy:docker-build": "docker build -t 804715735558.dkr.ecr.eu-west-2.amazonaws.com/recipe-runner:latest .",
     "deploy:docker-login": "$(aws ecr get-login --no-include-email --region eu-west-2)",
@@ -27,6 +28,7 @@
     "koa2-cors": "^2.0.6",
     "mime-types": "^2.1.24",
     "mongodb": "^3.3.3",
+    "nodemon": "^1.19.4",
     "uuid": "^3.3.3"
   },
   "devDependencies": {
