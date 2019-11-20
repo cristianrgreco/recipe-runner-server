@@ -1,4 +1,5 @@
 const Router = require('koa-router');
+const recipeId = require('./recipe-id');
 const fileUploadModule = require('./../file-upload');
 const {isAuthorised} = require("../auth/auth-middleware");
 
@@ -18,15 +19,20 @@ module.exports = recipeRepository => {
         const {path, type} = ctx.request.files.image;
         const image = await fileUpload(path, type);
 
+        const recipePayload = JSON.parse(ctx.request.body.recipe);
+        const createdAt = new Date();
+        const id = `${recipeId(recipePayload.name)}-${createdAt.getTime()}`;
+
         const recipe = {
-            ...JSON.parse(ctx.request.body.recipe),
-            createdAt: new Date(),
+            ...recipePayload,
+            id,
+            createdAt,
             createdBy: ctx.state.user.email,
             image
         };
         await recipeRepository.save(recipe);
 
-        const location = `/recipes/${recipe._id}`;
+        const location = `/recipes/${recipe.id}`;
         ctx.set('Location', location);
         ctx.status = 201;
     };
