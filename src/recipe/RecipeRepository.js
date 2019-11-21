@@ -14,6 +14,10 @@ class RecipeRepository {
     save(recipe) {
         return this.collection.insertOne({...recipe});
     }
+
+    update(id, recipe) {
+        return this.collection.replaceOne({id}, {...recipe});
+    }
 }
 
 module.exports = RecipeRepository;

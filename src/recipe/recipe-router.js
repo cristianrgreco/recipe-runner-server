@@ -37,8 +37,42 @@ module.exports = recipeRepository => {
         ctx.status = 201;
     };
 
+    const updateRecipe = async ctx => {
+        const id = ctx.params.id;
+        const recipePayload = JSON.parse(ctx.request.body.recipe);
+        const updatedAt = new Date();
+
+        let image;
+        if (ctx.request.files.image) {
+            const {path, type} = ctx.request.files.image;
+            image = await fileUpload(path, type);
+        } else {
+            image = recipePayload.image;
+        }
+
+        const recipe = {
+            id,
+            image,
+            name: recipePayload.name,
+            description: recipePayload.description,
+            serves: recipePayload.serves,
+            equipment: recipePayload.equipment,
+            ingredients: recipePayload.ingredients,
+            method: recipePayload.method,
+            updatedAt,
+            createdBy: ctx.state.user.email,
+        };
+
+        await recipeRepository.update(id, recipe);
+
+        const location = `/recipes/${recipe.id}`;
+        ctx.set('Location', location);
+        ctx.status = 200;
+    };
+
     return new Router()
         .get('/recipes', fetchRecipes)
         .get('/recipes/:id', fetchRecipe)
-        .post('/recipes', isAuthorised, createRecipe);
+        .post('/recipes', isAuthorised, createRecipe)
+        .put('/recipes/:id', isAuthorised, updateRecipe);
 };
