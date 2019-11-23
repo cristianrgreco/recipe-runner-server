@@ -10,7 +10,7 @@ module.exports = recipeRepository => {
         return (ctx.state.user && ctx.state.user.email === recipe.createdBy) || undefined;
     };
 
-    const recipeToDto = recipe => ({
+    const recipeToDto = ctx => recipe => ({
         ...recipe,
         createdBy: undefined,
         isEditable: isRecipeEditable(ctx, recipe)
@@ -18,13 +18,13 @@ module.exports = recipeRepository => {
 
     const fetchRecipes = async ctx => {
         const recipes = await recipeRepository.findAll();
-        ctx.body = recipes.map(recipeToDto);
+        ctx.body = recipes.map(recipeToDto(ctx));
     };
 
     const fetchRecipe = async ctx => {
         const id = ctx.params.id;
         const recipe = await recipeRepository.find(id);
-        ctx.body = recipeToDto(recipe);
+        ctx.body = recipeToDto(ctx)(recipe);
     };
 
     const createRecipe = async ctx => {
