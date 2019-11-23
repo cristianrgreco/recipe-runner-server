@@ -219,8 +219,8 @@ resource "aws_ecs_task_definition" "task_definition" {
   family = "${local.project_name}"
   container_definitions = "${data.template_file.task_definition_template.rendered}"
   network_mode = "awsvpc"
-  cpu = "256"
-  memory = "512"
+  cpu = "128"
+  memory = "256"
   requires_compatibilities = ["FARGATE"]
   execution_role_arn = "${aws_iam_role.iam_role_ecs_execution.arn}"
   task_role_arn = "${aws_iam_role.iam_role_ecs_task.arn}"
