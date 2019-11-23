@@ -1,7 +1,7 @@
 const Router = require('koa-router');
 const recipeId = require('./recipe-id');
 const fileUploadModule = require('./../file-upload');
-const {isAuthorised, optionalIsAuthorised} = require("../auth/auth-middleware");
+const {authenticate, authorisationRequired} = require("../auth/auth-middleware");
 
 module.exports = recipeRepository => {
     const fileUpload = fileUploadModule.remote();
@@ -10,23 +10,21 @@ module.exports = recipeRepository => {
         return (ctx.state.user && ctx.state.user.email === recipe.createdBy) || undefined;
     };
 
+    const recipeToDto = recipe => ({
+        ...recipe,
+        createdBy: undefined,
+        isEditable: isRecipeEditable(ctx, recipe)
+    });
+
     const fetchRecipes = async ctx => {
         const recipes = await recipeRepository.findAll();
-        ctx.body = recipes.map(recipe => ({
-            ...recipe,
-            createdBy: undefined,
-            isEditable: isRecipeEditable(ctx, recipe)
-        }));
+        ctx.body = recipes.map(recipeToDto);
     };
 
     const fetchRecipe = async ctx => {
         const id = ctx.params.id;
         const recipe = await recipeRepository.find(id);
-        ctx.body = {
-            ...recipe,
-            createdBy: undefined,
-            isEditable: isRecipeEditable(ctx, recipe)
-        };
+        ctx.body = recipeToDto(recipe);
     };
 
     const createRecipe = async ctx => {
@@ -52,17 +50,18 @@ module.exports = recipeRepository => {
     };
 
     const updateRecipe = async ctx => {
+        const processImage = async () => {
+            if (ctx.request.files.image) {
+                const {path, type} = ctx.request.files.image;
+                return await fileUpload(path, type);
+            } else {
+                return recipePayload.image;
+            }
+        };
+
         const id = ctx.params.id;
         const recipePayload = JSON.parse(ctx.request.body.recipe);
-        const updatedAt = new Date();
-
-        let image;
-        if (ctx.request.files.image) {
-            const {path, type} = ctx.request.files.image;
-            image = await fileUpload(path, type);
-        } else {
-            image = recipePayload.image;
-        }
+        const image = await processImage();
 
         const recipe = {
             id,
@@ -92,9 +91,9 @@ module.exports = recipeRepository => {
     };
 
     return new Router()
-        .get('/recipes', optionalIsAuthorised, fetchRecipes)
-        .get('/recipes/:id', optionalIsAuthorised, fetchRecipe)
-        .post('/recipes', isAuthorised, createRecipe)
-        .delete('/recipes/:id', isAuthorised, deleteRecipe)
-        .put('/recipes/:id', isAuthorised, updateRecipe);
+        .get('/recipes', authenticate, fetchRecipes)
+        .get('/recipes/:id', authenticate, fetchRecipe)
+        .post('/recipes', authenticate, authorisationRequired, createRecipe)
+        .delete('/recipes/:id', authenticate, authorisationRequired, deleteRecipe)
+        .put('/recipes/:id', authenticate, authorisationRequired, updateRecipe);
 };

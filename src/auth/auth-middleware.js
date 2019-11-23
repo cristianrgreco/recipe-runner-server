@@ -1,11 +1,6 @@
 const {isTokenValid} = require('./auth');
 
-const unauthorised = ctx => {
-    console.log('Unauthorised request received');
-    ctx.status = 401;
-};
-
-const optionalIsAuthorised = async (ctx, next) => {
+const authenticate = async (ctx, next) => {
     const authorisation = ctx.headers.authorization;
 
     if (!authorisation) {
@@ -29,31 +24,15 @@ const optionalIsAuthorised = async (ctx, next) => {
     }
 };
 
-const isAuthorised = async (ctx, next) => {
-    const authorisation = ctx.headers.authorization;
-
-    if (!authorisation) {
-        unauthorised(ctx);
+const authorisationRequired = async (ctx, next) => {
+    if (ctx.state.user === undefined) {
+        ctx.status = 401;
     } else {
-        const parts = authorisation.split(' ');
-
-        if (parts.length !== 2) {
-            unauthorised(ctx);
-        } else {
-            const token = parts[1];
-
-            const decodedToken = await isTokenValid(token);
-            if (!decodedToken) {
-                unauthorised(ctx);
-            } else {
-                ctx.state.user = {email: decodedToken.email};
-                await next();
-            }
-        }
+        await next();
     }
 };
 
 module.exports = {
-    optionalIsAuthorised,
-    isAuthorised,
+    authenticate,
+    authorisationRequired,
 };
