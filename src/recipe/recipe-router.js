@@ -12,7 +12,7 @@ module.exports = recipeRepository => {
 
     const fetchRecipe = async ctx => {
         const id = ctx.params.id;
-        ctx.body = await recipeRepository.findById(id);
+        ctx.body = await recipeRepository.find(id);
     };
 
     const createRecipe = async ctx => {
@@ -67,12 +67,19 @@ module.exports = recipeRepository => {
 
         const location = `/recipes/${recipe.id}`;
         ctx.set('Location', location);
-        ctx.status = 200;
+        ctx.status = 204;
+    };
+
+    const deleteRecipe = async ctx => {
+        const id = ctx.params.id;
+        await recipeRepository.delete(id);
+        ctx.status = 204;
     };
 
     return new Router()
         .get('/recipes', fetchRecipes)
         .get('/recipes/:id', fetchRecipe)
         .post('/recipes', isAuthorised, createRecipe)
+        .delete('/recipes/:id', isAuthorised, deleteRecipe)
         .put('/recipes/:id', isAuthorised, updateRecipe);
 };
