@@ -1,18 +1,32 @@
 const Router = require('koa-router');
 const recipeId = require('./recipe-id');
 const fileUploadModule = require('./../file-upload');
-const {isAuthorised} = require("../auth/auth-middleware");
+const {isAuthorised, optionalIsAuthorised} = require("../auth/auth-middleware");
 
 module.exports = recipeRepository => {
     const fileUpload = fileUploadModule.remote();
 
+    const isRecipeEditable = (ctx, recipe) => {
+        return (ctx.state.user && ctx.state.user.email === recipe.createdBy) || undefined;
+    };
+
     const fetchRecipes = async ctx => {
-        ctx.body = await recipeRepository.findAll();
+        const recipes = await recipeRepository.findAll();
+        ctx.body = recipes.map(recipe => ({
+            ...recipe,
+            createdBy: undefined,
+            isEditable: isRecipeEditable(ctx, recipe)
+        }));
     };
 
     const fetchRecipe = async ctx => {
         const id = ctx.params.id;
-        ctx.body = await recipeRepository.find(id);
+        const recipe = await recipeRepository.find(id);
+        ctx.body = {
+            ...recipe,
+            createdBy: undefined,
+            isEditable: isRecipeEditable(ctx, recipe)
+        };
     };
 
     const createRecipe = async ctx => {
@@ -78,8 +92,8 @@ module.exports = recipeRepository => {
     };
 
     return new Router()
-        .get('/recipes', fetchRecipes)
-        .get('/recipes/:id', fetchRecipe)
+        .get('/recipes', optionalIsAuthorised, fetchRecipes)
+        .get('/recipes/:id', optionalIsAuthorised, fetchRecipe)
         .post('/recipes', isAuthorised, createRecipe)
         .delete('/recipes/:id', isAuthorised, deleteRecipe)
         .put('/recipes/:id', isAuthorised, updateRecipe);
