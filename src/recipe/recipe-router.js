@@ -55,6 +55,7 @@ module.exports = recipeRepository => {
             image,
             name: recipePayload.name,
             description: recipePayload.description,
+            duration: recipePayload.duration,
             serves: recipePayload.serves,
             equipment: recipePayload.equipment,
             ingredients: recipePayload.ingredients,
