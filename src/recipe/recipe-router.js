@@ -73,7 +73,6 @@ module.exports = recipeRepository => {
             equipment: recipePayload.equipment,
             ingredients: recipePayload.ingredients,
             method: recipePayload.method,
-            updatedAt,
             createdBy: ctx.state.user.email,
         };
 
